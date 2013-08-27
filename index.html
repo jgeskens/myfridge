@@ -1,0 +1,146 @@
+<!doctype html>
+
+<html>
+	<head>
+		<title>MyFridge by Oemfoeland</title>
+		<script src="//ajax.googleapis.com/ajax/libs/angularjs/1.0.7/angular.min.js"></script>
+		<script src="//cdn.firebase.com/v0/firebase.js"></script>
+		<script src="//cdn.firebase.com/v0/firebase-simple-login.js"></script>
+		<script src="angularfire.min.js"></script>
+		<script src="//ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
+		<script src="bootstrap/js/bootstrap.js"></script>
+
+		<style type="text/css">
+	      body {
+	        padding-top: 60px;
+	        padding-bottom: 40px;
+	      }
+	    </style>
+
+		<link rel="stylesheet" type="text/css" href="bootstrap/css/bootstrap.min.css">
+		<link rel="stylesheet" type="text/css" href="bootstrap/css/bootstrap-responsive.min.css">
+	</head>
+
+	<body ng-app="MyFridgeApp" ng-controller="MyFridgeController">
+
+		<div class="navbar navbar-inverse navbar-fixed-top">
+			<div class="navbar-inner">
+				<div class="container">
+					<button type="button" class="btn btn-navbar" data-toggle="collapse" data-target=".nav-collapse">
+						<span class="icon-bar"></span>
+						<span class="icon-bar"></span>
+						<span class="icon-bar"></span>
+					</button>
+					<a class="brand" href=".">MyFridge by Oemfoeland</a>
+					<div class="nav-collapse collapse">
+						<ul class="nav">
+						  <li class="active"><a href=".">Home</a></li>
+						  <li><a href="#about">About</a></li>
+						  <li><a href="#contact">Contact</a></li>
+						  <li class="dropdown">
+							<a href="#" class="dropdown-toggle" data-toggle="dropdown">Dropdown <b class="caret"></b></a>
+							<ul class="dropdown-menu">
+							  <li><a href="#">Action</a></li>
+							  <li><a href="#">Another action</a></li>
+							  <li><a href="#">Something else here</a></li>
+							  <li class="divider"></li>
+							  <li class="nav-header">Nav header</li>
+							  <li><a href="#">Separated link</a></li>
+							  <li><a href="#">One more separated link</a></li>
+							</ul>
+						  </li>
+						</ul>
+
+						
+						<form ng-show="user" class="navbar-form pull-right">
+							<button ng-click="logout()" type="button" class="btn btn-danger">Logout</button>
+						</form>
+						<p ng-show="user" class="navbar-text pull-right">
+							Logged in as <a href="#" class="navbar-link">{{ user.email }}</a>
+						</p>
+
+						<form ng-hide="user || loggingIn" ng-submit="login()" class="navbar-form pull-right control-group" ng-class="{error: loginError}">
+							<input ng-show="loginError" class="span2" type="text" ng-model="loginForm.email" name="email" placeholder="Email" id="loginFormEmail">
+							<input ng-hide="loginError" class="span2" type="text" ng-model="loginForm.email" name="email" placeholder="Email" id="loginFormEmail">
+							<input class="span2" type="password" ng-model="loginForm.password" name="password" placeholder="Password">
+							<button type="submit" class="btn btn-primary">Login</button>
+						</form>
+
+						<p ng-show="loggingIn" class="navbar-text pull-right">
+							Logging in...
+						</p>
+					</div><!--/.nav-collapse -->
+				</div>
+			</div>
+		</div>
+
+		<div class="container">
+			<h1>My Fridge</h1>
+
+			<div ng-show="user">
+				<textarea ng-model="userdata.text" rows="10" cols="80"></textarea>
+			</div>
+
+			<hr>
+			<p>
+				<span ng-repeat="item in debuglog">{{ item }}<br/></span>
+			</p>
+		</div>
+	</body>
+</html>
+
+<script>
+var app = angular.module('MyFridgeApp', ['firebase']);
+app.controller('MyFridgeController', ['$scope', '$timeout', 'angularFire', 'angularFireAuth', function($scope, $timeOut, angularFire, angularFireAuth){
+	$scope.loggingIn = false;
+	$scope.loginForm = {};
+
+	var logger = function(msg){
+		if (!$scope.debuglog)
+			$scope.debuglog = [msg];
+		else
+			$scope.debuglog.push(msg);
+	};
+
+	var url='https://oemfoeland.firebaseio.com';
+
+	$scope.$on("angularFireAuth:login", function(evt, user){
+		$scope.loggingIn = false;
+		$scope.loginError = null;
+		var userUrl = url + '/users/' + $scope.user.provider + '/' + $scope.user.id;
+		angularFire(userUrl, $scope, 'userdata', {}).then(function()
+		{
+			$timeOut(function(){
+				if (!$scope.userdata.email)
+				$scope.userdata.email = $scope.user.email;
+			});
+		});
+	});
+
+	$scope.$on("angularFireAuth:logout", function(evt){
+		$scope.userdata = null;
+	});
+
+	$scope.$on("angularFireAuth:error", function(evt, error){
+		$scope.loggingIn = false;
+		$scope.loginError = error;
+	});
+	
+	angularFireAuth.initialize(url, {scope: $scope, 'name': 'user'})
+
+	$scope.login = function(){
+		$scope.loggingIn = true;
+		angularFireAuth.login('password', 
+		{
+			email: $scope.loginForm.email, 
+			password: $scope.loginForm.password,
+			rememberMe: $scope.loginForm.rememberMe
+		});
+		$scope.loginForm.password = '';
+	};
+
+	$scope.logout = function(){
+		angularFireAuth.logout();
+	};
+}]);
+</script>
