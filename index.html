@@ -3,12 +3,6 @@
 <html>
 	<head>
 		<title>MyFridge by Oemfoeland</title>
-		<script src="//ajax.googleapis.com/ajax/libs/angularjs/1.0.7/angular.min.js"></script>
-		<script src="//cdn.firebase.com/v0/firebase.js"></script>
-		<script src="//cdn.firebase.com/v0/firebase-simple-login.js"></script>
-		<script src="angularfire.min.js"></script>
-		<script src="//ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
-		<script src="bootstrap.min.js"></script>
 
 		<link rel="stylesheet" type="text/css" href="bootstrap.min.css">
 		<style type="text/css">
@@ -75,8 +69,6 @@
 		</nav>
 
 		<div class="container">
-			<h1>My Fridge</h1>
-
 			<div ng-show="user">
 				<textarea ng-model="userdata.text" rows="10" cols="80"></textarea>
 			</div>
@@ -86,6 +78,14 @@
 				<span ng-repeat="item in debuglog">{{ item }}<br/></span>
 			</p>
 		</div>
+
+
+		<script src="//ajax.googleapis.com/ajax/libs/angularjs/1.0.7/angular.min.js"></script>
+		<script src="//cdn.firebase.com/v0/firebase.js"></script>
+		<script src="//cdn.firebase.com/v0/firebase-simple-login.js"></script>
+		<script src="angularfire.min.js"></script>
+		<script src="//ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
+		<script src="bootstrap.min.js"></script>
 	</body>
 </html>
 
@@ -112,7 +112,7 @@ app.controller('MyFridgeController', ['$scope', '$timeout', 'angularFire', 'angu
 		{
 			$timeOut(function(){
 				if (!$scope.userdata.email)
-				$scope.userdata.email = $scope.user.email;
+					$scope.userdata.email = $scope.user.email;
 			});
 		});
 	});
