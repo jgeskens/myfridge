@@ -64,7 +64,7 @@
 				</form>
 
 				<p ng-show="loggingIn" class="navbar-text navbar-right">
-					Logging in...
+					Signing in...
 				</p>
 			</div><!-- /.navbar-collapse -->
 		</nav>
@@ -120,7 +120,40 @@
 				</table>
 			</div>
 
+			<div ng-hide="user">
+				<h1>MyFridge <small>by Oemfoeland</small></h1>
+				<p>
+					MyFridge will help you to avoid throwing away your food.
+					Want to try? Create an account and have fun!
+				</p>
+				<div class="alert alert-danger" ng-show="createAccountError">
+					There was an error while trying to create your account. 
+					Please try again later.
+				</div>
+				<form role="form" ng-submit="create_account()" ng-hide="creatingAccount">
+					<div class="row">
+						<div class="col-sm-4">
+							<div class="form-group">
+								<label for="registerEmail">Email address</label>
+								<input type="email" class="form-control" id="registerEmail" placeholder="Enter email" ng-model="new_account.email">
+							</div>
+						</div>
+					</div>
+					<div class="row">
+						<div class="col-sm-4">
+							<div class="form-group">
+								<label for="registerPassword">Password</label>
+								<input type="password" class="form-control" id="registerPassword" placeholder="Password" ng-model="new_account.password">
+							</div>
+						</div>
+					</div>
+					<button type="submit" class="btn btn-success">Create account</button>
+				</form>
+			</div>
 
+			<p ng-show="creatingAccount">
+				Creating your fresh new account...
+			</p>
 
 			<hr>
 			<p>&copy; Jef Geskens 2013</p>
@@ -151,6 +184,7 @@ var app = angular.module('MyFridgeApp', ['firebase']);
 app.controller('MyFridgeController', ['$scope', '$timeout', 'angularFire', 'angularFireAuth', function($scope, $timeOut, angularFire, angularFireAuth){
 	$scope.loggingIn = false;
 	$scope.loginForm = {};
+	$scope.creatingAccount = false;
 
 	var logger = function(msg){
 		if (!$scope.debuglog)
@@ -172,7 +206,6 @@ app.controller('MyFridgeController', ['$scope', '$timeout', 'angularFire', 'angu
 					$scope.userdata.email = $scope.user.email;
 			});
 		});
-		//angularFire(userUrl + '/fridge', $scope, 'fridge', []);
 	});
 
 	$scope.$on("angularFireAuth:logout", function(evt){
@@ -199,6 +232,28 @@ app.controller('MyFridgeController', ['$scope', '$timeout', 'angularFire', 'angu
 
 	$scope.logout = function(){
 		angularFireAuth.logout();
+	};
+
+	$scope.create_account = function(){
+		$scope.createAccountError = null;
+		$scope.creatingAccount = true;
+		angularFireAuth._authClient.createUser($scope.new_account.email, $scope.new_account.password, function(error, user){
+			$scope.creatingAccount = false;
+			if (!error){
+				$scope.loggingIn = true;
+				angularFireAuth.login('password',
+				{
+					email: user.email,
+					password: $scope.new_account.password,
+					rememberMe: true
+				});
+			}
+			else
+			{
+				$scope.createAccountError = error;
+			}
+			$scope.new_account = {};
+		});
 	};
 
 	$scope.add_food = function(){
@@ -259,10 +314,10 @@ app.controller('MyFridgeController', ['$scope', '$timeout', 'angularFire', 'angu
 }]);
 
 app.directive('focusOn', function() {
-   return function(scope, elem, attr) {
-      scope.$on(attr.focusOn, function(e) {
-          elem[0].focus();
-      });
-   };
+	 return function(scope, elem, attr) {
+			scope.$on(attr.focusOn, function(e) {
+					elem[0].focus();
+			});
+	 };
 });
 </script>
