@@ -71,7 +71,13 @@
 
 		<div class="container">
 			<div ng-show="user">
-				<h1>Got some new food?</h1>
+				<h2>Got some new food?</h2>
+				<p>
+					Are you filling your fridge with fresh food? Add each item here, 
+					together with the expiry date, or some estimate of the number of 
+					days it will stay fresh. MyFridge will in turn help you to avoid 
+					throwing away your food.
+				</p>
 				<form role="form" class="form-inline" ng-submit="add_food()">
 					<div class="form-group">
 						<input class="form-control" type="text" ng-model="newfood.name" placeholder="Name" focus-on="foodAdded">
@@ -86,6 +92,11 @@
 				</form>
 
 				<h2>What's in my fridge?</h2>
+				<p>
+					These are, based on what you told us, the contents of your fridge, 
+					sorted by expiry date. Please prepare something delicious with the
+					topmost items, or you have to throw away stuff.
+				</p>
 				<table class="table table-hover table-condensed">
 					<thead>
 						<tr>
