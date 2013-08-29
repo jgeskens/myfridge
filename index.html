@@ -23,11 +23,12 @@
 					<span class="icon-bar"></span>
 					<span class="icon-bar"></span>
 				</button>
-				<a class="navbar-brand" href=".">MyFridge by Oemfoeland</a>
+				<a class="navbar-brand" href="#">MyFridge by Oemfoeland</a>
 			</div>
 
 			<!-- Collect the nav links, forms, and other content for toggling -->
 			<div class="collapse navbar-collapse navbar-ex1-collapse">
+				<!--
 				<ul class="nav navbar-nav">
 					<li class="active"><a href="#">Link</a></li>
 					<li><a href="#">Link</a></li>
@@ -42,7 +43,7 @@
 						</ul>
 					</li>
 				</ul>
-
+				-->
 				<form ng-show="user" class="navbar-form navbar-right">
 					<button ng-click="logout()" type="submit" class="btn btn-danger">Sign out</button>
 				</form>
@@ -59,7 +60,7 @@
 						<input class="form-control" type="password" ng-model="loginForm.password" name="password" placeholder="Password">
 					</div>
 					
-					<button type="submit" class="btn btn-default">Sign in</button>
+					<button type="submit" class="btn btn-primary">Sign in</button>
 				</form>
 
 				<p ng-show="loggingIn" class="navbar-text navbar-right">
@@ -70,13 +71,58 @@
 
 		<div class="container">
 			<div ng-show="user">
-				<textarea ng-model="userdata.text" rows="10" cols="80"></textarea>
+				<h1>Got some new food?</h1>
+				<form role="form" class="form-inline" ng-submit="add_food()">
+					<div class="form-group">
+						<input class="form-control" type="text" ng-model="newfood.name" placeholder="Name" focus-on="foodAdded">
+					</div>
+					<div class="form-group">
+						<input class="form-control" type="text" ng-model="newfood.expiry_date" placeholder="Expiry date (yyyy-mm-dd)">
+					</div>
+					<div class="form-group">
+						<input class="form-control" type="text" ng-model="newfood.days" placeholder="Days until expiry">
+					</div>
+					<button type="submit" class="btn btn-primary">Add</button>
+				</form>
+
+				<h2>What's in my fridge?</h2>
+				<table class="table table-hover table-condensed">
+					<thead>
+						<tr>
+							<th>Name</th>
+							<th>Days left</td>
+							<th>Expiry date</th>
+							<th></th>
+						</tr>
+					</thead>
+					<tbody>
+						<tr ng-repeat="item in userdata.fridge|filter:{gone: false}|orderBy:'expiry_date'" ng-class="get_item_class(item)">
+							<td>{{ item.name }}</td>
+							<td>{{ get_days_left(item) }} days left</td>
+							<td>{{ item.expiry_date|date:"dd/MM/yyyy" }}</td>
+							<td>
+								<button class="btn btn-danger btn-xs" ng-click="mark_expired(item)">Expired</button>
+								<button class="btn btn-success btn-xs" ng-click="mark_gone(item)">All gone (yummy!)</button>
+							</td>
+						</tr>
+					</tbody>
+				</table>
 			</div>
 
+
+
 			<hr>
-			<p>
-				<span ng-repeat="item in debuglog">{{ item }}<br/></span>
-			</p>
+			<p>&copy; Jef Geskens 2013</p>
+			<label><input type="checkbox" ng-model="debug"> debug</label>
+			<div ng-show="debug">
+				<p>
+					<span ng-repeat="item in debuglog">{{ item }}<br/></span>
+				</p>
+				<p>
+					{{ userdata }}<br>
+					{{ newfood }}
+				</p>
+			</div>
 		</div>
 
 
@@ -115,6 +161,7 @@ app.controller('MyFridgeController', ['$scope', '$timeout', 'angularFire', 'angu
 					$scope.userdata.email = $scope.user.email;
 			});
 		});
+		//angularFire(userUrl + '/fridge', $scope, 'fridge', []);
 	});
 
 	$scope.$on("angularFireAuth:logout", function(evt){
@@ -142,5 +189,69 @@ app.controller('MyFridgeController', ['$scope', '$timeout', 'angularFire', 'angu
 	$scope.logout = function(){
 		angularFireAuth.logout();
 	};
+
+	$scope.add_food = function(){
+		var nf = $scope.newfood;
+		var now = new Date();
+		var expiry_date = null;
+
+		if (nf.days)
+		{
+			var days = parseInt(nf.days);
+			var ms = days * 1000 * 3600 * 24;
+			expiry_date = new Date(now.valueOf() + ms);
+		}
+		else
+		{
+			expiry_date = new Date(nf.expiry_date);
+		}
+
+		if (!$scope.userdata.fridge)
+			$scope.userdata.fridge = [];
+
+		var new_id = $scope.userdata.fridge.length;
+		$scope.userdata.fridge.push({
+			id: new_id,
+			name: nf.name,
+			expiry_date: expiry_date,
+			added: now,
+			gone: false
+		});
+		$scope.newfood = {};
+		$scope.$broadcast('foodAdded');
+	};
+
+	$scope.get_days_left = function(item){
+		var now = new Date();
+		return Math.round(((new Date(item.expiry_date)) - now) / (1000 * 3600 * 24));
+	};
+
+	$scope.get_item_class = function(item){
+		var days = $scope.get_days_left(item);
+		return {
+			warning: days <= 4 && days > 2, 
+			danger: days <= 2
+		}
+	};
+
+	$scope.mark_gone = function(item){
+		item.gone = true;
+		item.when_gone = new Date();
+		item.expired = false;
+	};
+
+	$scope.mark_expired = function(item){
+		item.gone = true;
+		item.when_gone = new Date();
+		item.expired = true;
+	};
 }]);
+
+app.directive('focusOn', function() {
+   return function(scope, elem, attr) {
+      scope.$on(attr.focusOn, function(e) {
+          elem[0].focus();
+      });
+   };
+});
 </script>
