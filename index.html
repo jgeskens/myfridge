@@ -10,9 +10,11 @@
 				/*padding-top: 70px;*/
 			}
 		</style>
+
+		<script src="//ajax.googleapis.com/ajax/libs/angularjs/1.0.7/angular.min.js"></script>
 	</head>
 
-	<body ng-app="MyFridgeApp" ng-controller="MyFridgeController">
+	<body ng-app="MyFridgeApp" ng-controller="MyFridgeController" ng-cloak>
 
 		<nav class="navbar navbar-default" role="navigation">
 			<!-- Brand and toggle get grouped for better mobile display -->
@@ -53,6 +55,9 @@
 				</p>
 
 				<form ng-hide="user || loggingIn" ng-submit="login()" class="navbar-form navbar-right">
+					<div class="checkbox">
+						<label for="loginFormEmail">Already have an account?</label>
+					</div>
 					<div class="form-group" ng-class="{'has-error': loginError}">
 						<input class="form-control" type="text" ng-model="loginForm.email" name="email" placeholder="Email" id="loginFormEmail">
 					</div>
@@ -69,95 +74,119 @@
 			</div><!-- /.navbar-collapse -->
 		</nav>
 
-		<div class="container">
-			<div ng-show="user">
-				<h2>Got some new food?</h2>
-				<p>
-					Are you filling your fridge with fresh food? Add each item here, 
-					together with the expiry date, or some estimate of the number of 
-					days it will stay fresh. MyFridge will in turn help you to avoid 
-					throwing away your food.
-				</p>
-				<form role="form" class="form-inline" ng-submit="add_food()">
-					<div class="form-group">
-						<input class="form-control" type="text" ng-model="newfood.name" placeholder="Name" focus-on="foodAdded">
-					</div>
-					<div class="form-group">
-						<input class="form-control" type="text" ng-model="newfood.expiry_date" placeholder="Expiry date (yyyy-mm-dd)">
-					</div>
-					<div class="form-group">
-						<input class="form-control" type="text" ng-model="newfood.days" placeholder="Days until expiry">
-					</div>
-					<button type="submit" class="btn btn-primary">Add</button>
-				</form>
+		<div class="container" ng-show="user">
 
-				<h2>What's in my fridge?</h2>
-				<p>
-					These are, based on what you told us, the contents of your fridge, 
-					sorted by expiry date. Please prepare something delicious with the
-					topmost items, or you have to throw away stuff.
-				</p>
-				<table class="table table-hover table-condensed">
-					<thead>
-						<tr>
-							<th>Name</th>
-							<th>Days left</td>
-							<th>Expiry date</th>
-							<th></th>
-						</tr>
-					</thead>
-					<tbody>
-						<tr ng-repeat="item in userdata.fridge|filter:{gone: false}|orderBy:'expiry_date'" ng-class="get_item_class(item)">
-							<td>{{ item.name }}</td>
-							<td>{{ get_days_left(item) }} days left</td>
-							<td>{{ item.expiry_date|date:"dd/MM/yyyy" }}</td>
-							<td>
-								<button class="btn btn-danger btn-xs" ng-click="mark_expired(item)">Expired</button>
-								<button class="btn btn-success btn-xs" ng-click="mark_gone(item)">All gone (yummy!)</button>
-							</td>
-						</tr>
-					</tbody>
-				</table>
+			<div ng-show="undoExpired.gone" class="alert alert-success">
+				Successfully trashed {{ undoExpired.name }}!
+				<a href class="alert-link" ng-click="restoreItem(undoExpired)">Undo</a>
 			</div>
 
-			<div ng-hide="user">
+			<div ng-show="undoGone.gone" class="alert alert-success">
+				Successfully marked {{ undoGone.name }} as consumed! Your fridge is very happy now.
+				<a href class="alert-link" ng-click="restoreItem(undoGone)">Undo</a>
+			</div>
+
+			<h2>Got some new food?</h2>
+			<p>
+				Are you filling your fridge with fresh food? Add each item here, 
+				together with the expiry date, or some estimate of the number of 
+				days it will stay fresh. MyFridge will in turn help you to avoid 
+				throwing away your food.
+			</p>
+			<form role="form" class="form-inline" ng-submit="add_food()">
+				<div class="form-group">
+					<input class="form-control" type="text" ng-model="newfood.name" placeholder="Name" focus-on="foodAdded">
+				</div>
+				<div class="form-group">
+					<input class="form-control" type="text" ng-model="newfood.expiry_date" placeholder="Expiry date (yyyy-mm-dd)">
+				</div>
+				<div class="form-group">
+					<input class="form-control" type="text" ng-model="newfood.days" placeholder="Days until expiry">
+				</div>
+				<button type="submit" class="btn btn-primary">Add</button>
+			</form>
+
+			<h2>What's in my fridge?</h2>
+			<p>
+				These are, based on what you told us, the contents of your fridge, 
+				sorted by expiry date. Please prepare something delicious with the
+				topmost items, or you have to throw away stuff.
+			</p>
+			<table class="table table-hover table-condensed">
+				<thead>
+					<tr>
+						<th>Name</th>
+						<th>Days left</td>
+						<th>Expiry date</th>
+						<th></th>
+					</tr>
+				</thead>
+				<tbody>
+					<tr ng-repeat="item in userdata.fridge|filter:{gone: false}|orderBy:'expiry_date'" ng-class="get_item_class(item)">
+						<td>{{ item.name }}</td>
+						<td>{{ get_days_left(item) }} days left</td>
+						<td>{{ item.expiry_date|date:"dd/MM/yyyy" }}</td>
+						<td>
+							<button class="btn btn-danger btn-xs" ng-click="mark_expired(item);">Trash</button>
+							<button class="btn btn-success btn-xs" ng-click="mark_gone(item);">All consumed (yummy!)</button>
+						</td>
+					</tr>
+				</tbody>
+			</table>
+		</div>
+
+		<div class="jumbotron" ng-hide="user">
+			<div class="container">
 				<h1>MyFridge <small>by Oemfoeland</small></h1>
 				<p>
 					MyFridge will help you to avoid throwing away your food.
 					Want to try? Create an account and have fun!
 				</p>
-				<div class="alert alert-danger" ng-show="createAccountError">
-					There was an error while trying to create your account. 
-					Please try again later.
-				</div>
-				<form role="form" ng-submit="create_account()" ng-hide="creatingAccount">
-					<div class="row">
-						<div class="col-sm-4">
-							<div class="form-group">
-								<label for="registerEmail">Email address</label>
-								<input type="email" class="form-control" id="registerEmail" placeholder="Enter email" ng-model="new_account.email">
-							</div>
-						</div>
-					</div>
-					<div class="row">
-						<div class="col-sm-4">
-							<div class="form-group">
-								<label for="registerPassword">Password</label>
-								<input type="password" class="form-control" id="registerPassword" placeholder="Password" ng-model="new_account.password">
-							</div>
-						</div>
-					</div>
-					<button type="submit" class="btn btn-success">Create account</button>
-				</form>
 			</div>
+		</div>
 
-			<p ng-show="creatingAccount">
-				Creating your fresh new account...
-			</p>
+		<div class="container" ng-hide="user">
+			<div class="row">
+				<div class="col-sm-7">
+					<h2>Example</h2>
+					<img src="screenshot.png" alt="" class="img-thumbnail">
+				</div>
 
+				<div class="col-sm-5 pull-right">
+					<h2>Create an account</h2>
+			
+					<div class="alert alert-danger" ng-show="createAccountError">
+						There was an error while trying to create your account. 
+						Please try again later.
+					</div>
+
+					<form role="form" ng-submit="create_account()" ng-hide="creatingAccount">
+				
+						<div class="form-group">
+							<label for="registerEmail">Email address</label>
+							<input type="email" class="form-control" id="registerEmail" placeholder="Enter email" ng-model="new_account.email">
+						</div>
+					
+						<div class="form-group">
+							<label for="registerPassword">Password</label>
+							<input type="password" class="form-control" id="registerPassword" placeholder="Password" ng-model="new_account.password">
+						</div>
+					
+						<button type="submit" class="btn btn-success">Create account</button>
+						<button type="button" class="btn btn-primary" ng-click="login_github()">Sign in with Github</button>
+					</form>
+
+					<p ng-show="creatingAccount">
+						Creating your fresh new account...
+					</p>
+				</div>
+			</div>	
+		</div>
+
+		<div class="container">
 			<hr>
 			<p>&copy; Jef Geskens 2013</p>
-			<label><input type="checkbox" ng-model="debug"> debug</label>
+			<label ng-show="false"><input type="checkbox" ng-model="debug"> debug</label>
 			<div ng-show="debug">
 				<p>
 					<span ng-repeat="item in debuglog">{{ item }}<br/></span>
@@ -169,8 +198,6 @@
 			</div>
 		</div>
 
-
-		<script src="//ajax.googleapis.com/ajax/libs/angularjs/1.0.7/angular.min.js"></script>
 		<script src="//cdn.firebase.com/v0/firebase.js"></script>
 		<script src="//cdn.firebase.com/v0/firebase-simple-login.js"></script>
 		<script src="angularfire.min.js"></script>
@@ -256,6 +283,10 @@ app.controller('MyFridgeController', ['$scope', '$timeout', 'angularFire', 'angu
 		});
 	};
 
+	$scope.login_github = function(){
+		angularFireAuth.login('github', {rememberMe: true});
+	};
+
 	$scope.add_food = function(){
 		var nf = $scope.newfood;
 		var now = new Date();
@@ -301,15 +332,24 @@ app.controller('MyFridgeController', ['$scope', '$timeout', 'angularFire', 'angu
 	};
 
 	$scope.mark_gone = function(item){
+		$scope.undoGone = item;
+		$timeOut(function(){ $scope.undoGone = null; }, 5000);
 		item.gone = true;
 		item.when_gone = new Date();
 		item.expired = false;
 	};
 
 	$scope.mark_expired = function(item){
+		$scope.undoExpired = item;
+		$timeOut(function(){ $scope.undoExpired = null; }, 5000);
 		item.gone = true;
 		item.when_gone = new Date();
 		item.expired = true;
+	};
+
+	$scope.restoreItem = function(item){
+		$scope.userdata.fridge[item.id].gone = false;
+		item.gone = false;
 	};
 }]);
 
