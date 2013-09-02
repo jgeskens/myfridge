@@ -1,0 +1,112 @@
+<div class="container" ng-show="user">
+
+	<div ng-show="undoExpired.gone" class="alert alert-success">
+		Successfully trashed {{ undoExpired.name }}!
+		<a href class="alert-link" ng-click="restoreItem(undoExpired)">Undo</a>
+	</div>
+
+	<div ng-show="undoGone.gone" class="alert alert-success">
+		Successfully marked {{ undoGone.name }} as consumed! Your fridge is very happy now.
+		<a href class="alert-link" ng-click="restoreItem(undoGone)">Undo</a>
+	</div>
+
+	<h2>Got some new food?</h2>
+	<p>
+		Are you filling your fridge with fresh food? Add each item here, 
+		together with the expiry date, or some estimate of the number of 
+		days it will stay fresh. MyFridge will in turn help you to avoid 
+		throwing away your food.
+	</p>
+	<form role="form" class="form-inline" ng-submit="add_food()">
+		<div class="form-group">
+			<input class="form-control" type="text" ng-model="newfood.name" placeholder="Name" focus-on="foodAdded">
+		</div>
+		<div class="form-group">
+			<input class="form-control" type="text" ng-model="newfood.expiry_date" placeholder="Expiry date (yyyy-mm-dd)">
+		</div>
+		<div class="form-group">
+			<input class="form-control" type="text" ng-model="newfood.days" placeholder="Days until expiry">
+		</div>
+		<button type="submit" class="btn btn-primary">Add</button>
+	</form>
+
+	<h2>What's in my fridge?</h2>
+	<p>
+		These are, based on what you told us, the contents of your fridge, 
+		sorted by expiry date. Please prepare something delicious with the
+		topmost items, or you have to throw away stuff.
+	</p>
+	<table class="table table-hover table-condensed">
+		<thead>
+			<tr>
+				<th>Name</th>
+				<th>Days left</td>
+				<th>Expiry date</th>
+				<th></th>
+			</tr>
+		</thead>
+		<tbody>
+			<tr ng-repeat="item in userdata.fridge|filter:{gone: false}|orderBy:'expiry_date'" ng-class="get_item_class(item)">
+				<td>{{ item.name }}</td>
+				<td>{{ get_days_left(item) }} days left</td>
+				<td>{{ item.expiry_date|date:"dd/MM/yyyy" }}</td>
+				<td>
+					<button ng-hide="show_opened_form" class="btn btn-danger btn-xs" ng-click="mark_expired(item);">Trash</button>
+					<button ng-hide="show_opened_form" class="btn btn-success btn-xs" ng-click="mark_gone(item);">All consumed (yummy!)</button>
+					<button ng-hide="show_opened_form" class="btn btn-default btn-xs" ng-click="show_opened_form=true">Opened</button>
+					<form ng-show="show_opened_form" ng-submit="mark_opened(item, opened.days)">
+						<input class="form-control" type="text" ng-model="opened.days" placeholder="Set days until expiry">
+					</form>
+				</td>
+			</tr>
+		</tbody>
+	</table>
+</div>
+
+<div class="jumbotron" ng-hide="user">
+	<div class="container">
+		<h1>MyFridge <small>by Oemfoeland</small></h1>
+		<p>
+			MyFridge will help you to avoid throwing away your food.
+			Want to try? Create an account and have fun!
+		</p>
+	</div>
+</div>
+
+<div class="container" ng-hide="user">
+	<div class="row">
+		<div class="col-sm-7">
+			<h2>Example</h2>
+			<img src="screenshot.png" alt="" class="img-thumbnail">
+		</div>
+
+		<div class="col-sm-5 pull-right">
+			<h2>Create an account</h2>
+	
+			<div class="alert alert-danger" ng-show="createAccountError">
+				There was an error while trying to create your account. 
+				Please try again later.
+			</div>
+
+			<form role="form" ng-submit="create_account()" ng-hide="creatingAccount">
+		
+				<div class="form-group">
+					<label for="registerEmail">Email address</label>
+					<input type="email" class="form-control" id="registerEmail" placeholder="Enter email" ng-model="new_account.email">
+				</div>
+			
+				<div class="form-group">
+					<label for="registerPassword">Password</label>
+					<input type="password" class="form-control" id="registerPassword" placeholder="Password" ng-model="new_account.password">
+				</div>
+			
+				<button type="submit" class="btn btn-success">Create account</button>
+				<button type="button" class="btn btn-primary" ng-click="login_github()">Sign in with Github</button>
+			</form>
+
+			<p ng-show="creatingAccount">
+				Creating your fresh new account...
+			</p>
+		</div>
+	</div>	
+</div>
