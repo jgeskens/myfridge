@@ -8,7 +8,36 @@ app.config(['$routeProvider', function($routeProvider){
 }]);
 
 app.controller('MyFridgeHome', ['$scope', '$timeout', 'angularFire', 'angularFireAuth', function($scope, $timeOut, angularFire, angularFireAuth){
+	$scope.add_food = function(){
+		var nf = $scope.newfood;
+		var now = new Date();
+		var expiry_date = null;
 
+		if (nf.days)
+		{
+			var days = parseInt(nf.days);
+			var ms = days * 1000 * 3600 * 24;
+			expiry_date = new Date(now.valueOf() + ms);
+		}
+		else
+		{
+			expiry_date = new Date(nf.expiry_date);
+		}
+
+		if (!$scope.userdata.fridge)
+			$scope.userdata.fridge = [];
+
+		var new_id = $scope.userdata.fridge.length;
+		$scope.userdata.fridge.push({
+			id: new_id,
+			name: nf.name,
+			expiry_date: expiry_date,
+			added: now,
+			gone: false
+		});
+		$scope.newfood = {};
+		$scope.$broadcast('foodAdded');
+	};
 }]);
 
 
@@ -91,36 +120,7 @@ app.controller('MyFridgeBase', ['$scope', '$timeout', 'angularFire', 'angularFir
 		angularFireAuth.login('github', {rememberMe: true, scope: ''});
 	};
 
-	$scope.add_food = function(){
-		var nf = $scope.newfood;
-		var now = new Date();
-		var expiry_date = null;
-
-		if (nf.days)
-		{
-			var days = parseInt(nf.days);
-			var ms = days * 1000 * 3600 * 24;
-			expiry_date = new Date(now.valueOf() + ms);
-		}
-		else
-		{
-			expiry_date = new Date(nf.expiry_date);
-		}
-
-		if (!$scope.userdata.fridge)
-			$scope.userdata.fridge = [];
-
-		var new_id = $scope.userdata.fridge.length;
-		$scope.userdata.fridge.push({
-			id: new_id,
-			name: nf.name,
-			expiry_date: expiry_date,
-			added: now,
-			gone: false
-		});
-		$scope.newfood = {};
-		$scope.$broadcast('foodAdded');
-	};
+	
 
 	$scope.get_days_left = function(item){
 		var now = new Date();
